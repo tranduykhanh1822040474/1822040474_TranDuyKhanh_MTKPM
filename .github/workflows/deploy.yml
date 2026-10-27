@@ -1,0 +1,81 @@
+﻿# ===== GITHUB ACTIONS WORKFLOW =====
+# File: .github/workflows/deploy.yml
+# Sinh vien: Tran Duy Khanh - 1822040474
+# Mo ta: Tu dong kiem tra va deploy website len GitHub Pages
+
+name: CI/CD Deploy to GitHub Pages
+
+# Trigger: chay moi khi push len nhanh main
+on:
+  push:
+    branches:
+      - main
+
+# Quyen truy cap de deploy len GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  # ===== JOB 1: CHECK (day la phan CI) =====
+  check:
+    name: Kiem tra code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Kiem tra file index.html ton tai
+        run: |
+          if [ -f "index.html" ]; then
+            echo "index.html ton tai"
+          else
+            echo "KHONG tim thay index.html"
+            exit 1
+          fi
+
+      - name: Kiem tra file style.css ton tai
+        run: |
+          if [ -f "style.css" ]; then
+            echo "style.css ton tai"
+          else
+            echo "KHONG tim thay style.css"
+            exit 1
+          fi
+
+      - name: Kiem tra file script.js ton tai
+        run: |
+          if [ -f "script.js" ]; then
+            echo "script.js ton tai"
+          else
+            echo "KHONG tim thay script.js"
+            exit 1
+          fi
+
+      - name: Kiem tra the title
+        run: |
+          if grep -q "<title>" index.html; then
+            echo "Co the title"
+          else
+            echo "KHONG co the title"
+            exit 1
+          fi
+
+  # ===== JOB 2: DEPLOY (day la phan CD) =====
+  deploy:
+    needs: check  # chi chay khi job check thanh cong
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
